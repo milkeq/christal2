@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>30초 회피게임</title>
+<title>30초 지옥 회피</title>
 <style>
 html,body{
 margin:0;
@@ -15,12 +15,9 @@ touch-action:none;
 }
 canvas{display:block;}
 #nameSelect{
-position:absolute;
-inset:0;
-display:flex;
-flex-direction:column;
+position:absolute;inset:0;
+display:flex;flex-direction:column;
 align-items:center;
-justify-content:flex-start;
 padding:20px;
 background:linear-gradient(#AEE3FF 70%, #8ED081 70%);
 overflow-y:auto;
@@ -28,68 +25,46 @@ overflow-y:auto;
 .grid{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:12px;
-width:100%;
-max-width:400px;
+gap:12px;width:100%;max-width:400px;
 }
 .nameBtn{
-background:rgba(255,255,255,0.8);
+background:rgba(255,255,255,0.85);
 border-radius:18px;
-padding:14px 8px;
+padding:14px;
 text-align:center;
 box-shadow:0 6px 15px rgba(0,0,0,0.1);
-font-size:14px;
-transition:0.15s;
 }
 .nameBtn:active{transform:scale(0.9);}
-#ui{
-position:absolute;
-inset:0;
-pointer-events:none;
-}
 .controls{
-position:absolute;
-bottom:20px;
-left:0;
-right:0;
-display:flex;
-justify-content:space-between;
+position:absolute;bottom:20px;
+left:0;right:0;
+display:flex;justify-content:space-between;
 padding:0 25px;
-pointer-events:auto;
 }
 .ctrl{
-width:70px;
-height:70px;
+width:75px;height:75px;
 border-radius:50%;
-background:rgba(255,255,255,0.3);
-backdrop-filter:blur(6px);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:28px;
-color:white;
+background:rgba(255,255,255,0.35);
+display:flex;align-items:center;justify-content:center;
+font-size:28px;color:white;
 }
 .jump{
-width:90px;
-height:90px;
+width:95px;height:95px;
 background:linear-gradient(145deg,#4FC3FF,#2196F3);
 }
 .ctrl:active{transform:scale(0.85);}
 #result{
-position:absolute;
-inset:0;
-background:rgba(0,0,0,0.4);
+position:absolute;inset:0;
 display:none;
-align-items:center;
-justify-content:center;
-flex-direction:column;
+background:rgba(0,0,0,0.5);
 color:white;
+align-items:center;justify-content:center;
+flex-direction:column;
 font-size:20px;
 }
 button{
 padding:12px 24px;
-border:none;
-border-radius:20px;
+border:none;border-radius:20px;
 font-size:16px;
 }
 </style>
@@ -103,12 +78,10 @@ font-size:16px;
 
 <canvas id="game"></canvas>
 
-<div id="ui">
 <div class="controls">
 <div class="ctrl" id="left">⬅</div>
 <div class="ctrl jump" id="jump">●</div>
 <div class="ctrl" id="right">➡</div>
-</div>
 </div>
 
 <div id="result">
@@ -132,82 +105,74 @@ grid.appendChild(d);
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 let W,H;
-function resize(){
-W=canvas.width=innerWidth;
-H=canvas.height=innerHeight;
-}
-resize();
-addEventListener("resize",resize);
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
+resize();addEventListener("resize",resize);
 
 const faceImg=new Image();
 faceImg.src="face.png";
 
-let player,faces=[],particles=[];
+let player,faces=[];
 let left=false,right=false;
-let gravity=0.6;
+let gravity=0.7;
 let timer=30;
 let score=0;
 let best=localStorage.best||0;
 let gameActive=false;
-let spawnTimer=0;
-let difficulty=1;
+let spawnTick=0;
 
 function startGame(){
 document.getElementById("nameSelect").style.display="none";
-player={
-x:W/2,
-y:H*0.6,
-vx:0,
-vy:0,
-size:W*0.09,
-grounded:false
-};
+player={x:W/2,y:H*0.6,vx:0,vy:0,size:W*0.1,grounded:false};
 faces=[];
-particles=[];
 timer=30;
 score=0;
+spawnTick=0;
 gameActive=true;
+spawnWave(6); // 시작하자마자 6개
 }
 
-function spawnFace(){
-let size=W*0.1;
-let x=Math.random()*(W-size);
-
-if(timer<=5 && Math.random()<0.5){
-x=player.x+(Math.random()*120-60);
-}
-
+function spawnWave(count){
+for(let i=0;i<count;i++){
+let size=W*0.14; // 더 크게
 faces.push({
-x:x,
-y:-size,
+x:Math.random()*(W-size),
+y:-Math.random()*300,
 size:size,
-speed:(3+Math.random()*2)*difficulty,
+speed:4+Math.random()*2,
 rot:Math.random()*6,
-vr:(Math.random()-0.5)*0.1
+vr:(Math.random()-0.5)*0.15
 });
+}
 }
 
 function update(){
 if(!gameActive)return;
 
-const progress=1-(timer/30);
-difficulty=1+Math.pow(progress,2.3)*4;
-if(timer<=5) difficulty*=2;
+let progress=1-(timer/30);
 
-spawnTimer++;
-let spawnInterval=850/difficulty;
-if(timer<=5) spawnInterval*=0.5;
+// 시간 갈수록 웨이브 개수 증가
+let waveAmount=4+Math.floor(progress*20);
 
-if(spawnTimer>spawnInterval){
-spawnTimer=0;
-if(faces.length<(timer<=5?26:18))spawnFace();
+// 속도 증가
+faces.forEach(f=>{
+f.speed=4+progress*8;
+});
+
+// 일정 간격마다 웨이브 생성
+spawnTick++;
+let interval=45-progress*30;
+if(interval<10)interval=10;
+
+if(spawnTick>interval){
+spawnTick=0;
+spawnWave(waveAmount);
 }
 
+// 플레이어 물리
 player.vy+=gravity;
-if(left) player.vx-=0.5;
-if(right) player.vx+=0.5;
+if(left) player.vx-=0.7;
+if(right) player.vx+=0.7;
 player.vx*=0.9;
-
 player.x+=player.vx;
 player.y+=player.vy;
 
@@ -218,6 +183,7 @@ player.vy=0;
 player.grounded=true;
 }else player.grounded=false;
 
+// face 업데이트
 faces.forEach((f,i)=>{
 f.y+=f.speed;
 f.rot+=f.vr;
@@ -231,14 +197,14 @@ player.y+player.size>f.y
 endGame();
 }
 
-if(f.y>H){
+if(f.y>H+200){
 faces.splice(i,1);
 score++;
 }
 });
 
 if(timer<=5){
-ctx.fillStyle="rgba(255,0,0,0.08)";
+ctx.fillStyle="rgba(255,0,0,0.15)";
 ctx.fillRect(0,0,W,H);
 }
 }
@@ -254,8 +220,10 @@ if(timer<=0)endGame();
 }
 last=t;
 }
+
 ctx.clearRect(0,0,W,H);
 
+// 배경
 ctx.fillStyle="#AEE3FF";
 ctx.fillRect(0,0,W,H*0.7);
 
@@ -263,10 +231,10 @@ ctx.fillStyle="#8ED081";
 ctx.beginPath();
 ctx.moveTo(0,H*0.7);
 ctx.quadraticCurveTo(W/2,H*0.65,W,H*0.7);
-ctx.lineTo(W,H);
-ctx.lineTo(0,H);
+ctx.lineTo(W,H);ctx.lineTo(0,H);
 ctx.fill();
 
+// face 그리기
 faces.forEach(f=>{
 ctx.save();
 ctx.translate(f.x+f.size/2,f.y+f.size/2);
@@ -275,6 +243,7 @@ ctx.drawImage(faceImg,-f.size/2,-f.size/2,f.size,f.size);
 ctx.restore();
 });
 
+// 플레이어
 if(gameActive){
 ctx.fillStyle="white";
 ctx.fillRect(player.x,player.y,player.size,player.size);
@@ -282,7 +251,7 @@ ctx.fillRect(player.x,player.y,player.size,player.size);
 ctx.fillStyle="black";
 ctx.font="14px sans-serif";
 ctx.textAlign="center";
-ctx.fillText(selectedName,player.x+player.size/2,player.y-10);
+ctx.fillText(selectedName,player.x+player.size/2,player.y-12);
 }
 
 ctx.fillStyle="black";
@@ -310,7 +279,7 @@ document.getElementById("left").ontouchend=()=>left=false;
 document.getElementById("right").ontouchstart=()=>right=true;
 document.getElementById("right").ontouchend=()=>right=false;
 document.getElementById("jump").ontouchstart=()=>{
-if(player.grounded) player.vy=-12;
+if(player.grounded) player.vy=-14;
 };
 </script>
 </body>
