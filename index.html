@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>쑤정께임</title>
+<title>쑤저이</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#AEE3FF;font-family:sans-serif;touch-action:none;}
 canvas{display:block;}
@@ -69,7 +69,7 @@ let best=localStorage.best||0;
 let gameActive=false;
 let spawnTick=0;
 
-let lives=10;
+let lives=5; // ✅ 목숨 5개
 let shakePower=0;
 
 function startGame(){
@@ -79,14 +79,14 @@ faces=[];
 timer=30;
 score=0;
 spawnTick=0;
-lives=10;
+lives=5; // ✅ 시작 시 5개
 gameActive=true;
-spawnWave(3); // 시작부터 약간 어렵게
+spawnWave(3);
 }
 
 function spawnWave(count){
 for(let i=0;i<count;i++){
-let size=W*0.135; // 살짝 더 크게
+let size=W*0.135;
 faces.push({
 x:Math.random()*(W-size),
 y:-Math.random()*120,
@@ -101,7 +101,7 @@ vr:(Math.random()-0.5)*0.1
 function hit(){
 if(lives<=0)return;
 lives--;
-shakePower=30; // 더 강한 흔들림
+shakePower=30;
 if(lives<=0)setTimeout(endGame,400);
 }
 
@@ -109,8 +109,6 @@ function update(){
 if(!gameActive)return;
 
 let progress=1-(timer/30);
-
-// 초반부터 조금 나오고, 후반 과하지 않게
 let waveAmount=2+Math.floor(progress*4);
 
 faces.forEach(f=>f.speed=3.5+progress*4);
@@ -124,7 +122,6 @@ spawnTick=0;
 spawnWave(waveAmount);
 }
 
-// 플레이어 물리
 player.vy+=gravity;
 if(left) player.vx-=0.7;
 if(right) player.vx+=0.7;
@@ -132,15 +129,8 @@ player.vx*=0.9;
 player.x+=player.vx;
 player.y+=player.vy;
 
-// ✅ 화면 밖으로 못 나가게 고정
-if(player.x<0){
-player.x=0;
-player.vx=0;
-}
-if(player.x+player.size>W){
-player.x=W-player.size;
-player.vx=0;
-}
+if(player.x<0){player.x=0;player.vx=0;}
+if(player.x+player.size>W){player.x=W-player.size;player.vx=0;}
 
 let ground=H*0.7;
 if(player.y+player.size>ground){
@@ -149,7 +139,6 @@ player.vy=0;
 player.grounded=true;
 }else player.grounded=false;
 
-// face
 faces.forEach((f,i)=>{
 f.y+=f.speed;
 f.rot+=f.vr;
@@ -185,7 +174,6 @@ last=t;
 
 ctx.save();
 
-// 강한 흔들림
 if(shakePower>0){
 ctx.translate((Math.random()-0.5)*shakePower,(Math.random()-0.5)*shakePower);
 shakePower*=0.85;
@@ -222,25 +210,25 @@ ctx.fillText(selectedName,player.x+player.size/2,player.y-12);
 
 ctx.restore();
 
-// 하트
-const size=22;
-let total=10*(size+6);
+// ✅ 하트 5개 표시
+const size=24;
+let total=5*(size+10);
 let startX=W/2-total/2;
 for(let i=0;i<lives;i++){
-let x=startX+i*(size+6);
+let x=startX+i*(size+10);
 ctx.fillStyle="#ff4d6d";
 ctx.beginPath();
-ctx.moveTo(x+size/2,25);
-ctx.bezierCurveTo(x,10,x-5,25,x+size/2,40);
-ctx.bezierCurveTo(x+size+5,25,x+size,10,x+size/2,25);
+ctx.moveTo(x+size/2,28);
+ctx.bezierCurveTo(x,10,x-6,28,x+size/2,45);
+ctx.bezierCurveTo(x+size+6,28,x+size,10,x+size/2,28);
 ctx.fill();
 }
 
 ctx.fillStyle="black";
 ctx.font="18px sans-serif";
 ctx.textAlign="center";
-ctx.fillText("남은시간: "+timer,W/2,70);
-ctx.fillText("점수: "+score,W/2,95);
+ctx.fillText("남은시간: "+timer,W/2,75);
+ctx.fillText("점수: "+score,W/2,100);
 
 update();
 }
